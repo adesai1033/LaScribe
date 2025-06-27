@@ -1,0 +1,7 @@
+pix2tex
+Pillow
+pdf2image
+numpy<2
+torch>=2.0.0
+transformers>=4.30.0
+openai>=1.0.0
