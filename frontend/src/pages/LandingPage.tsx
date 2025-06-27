@@ -6,9 +6,23 @@ import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
 import Footer from '../components/Footer';
 
-const LandingPage = () => {
+interface LandingPageProps {
+  onLoginSuccess: () => void;
+}
+
+const LandingPage = ({ onLoginSuccess }: LandingPageProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+
+  const handleLoginSuccess = () => {
+    setShowLogin(false);
+    onLoginSuccess();
+  };
+
+  const handleRegisterSuccess = () => {
+    setShowRegister(false);
+    onLoginSuccess();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -33,6 +47,7 @@ const LandingPage = () => {
           setShowLogin(false);
           setShowRegister(true);
         }}
+        onLoginSuccess={handleLoginSuccess}
       />
       
       <RegisterModal 
@@ -42,6 +57,7 @@ const LandingPage = () => {
           setShowRegister(false);
           setShowLogin(true);
         }}
+        onRegisterSuccess={handleRegisterSuccess}
       />
     </div>
   );

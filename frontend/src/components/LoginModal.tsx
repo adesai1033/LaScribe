@@ -5,9 +5,10 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToRegister: () => void;
+  onLoginSuccess?: () => void;
 }
 
-const LoginModal = ({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) => {
+const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }: LoginModalProps) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -47,6 +48,10 @@ const LoginModal = ({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) =>
     if (validateForm()) {
       // Handle login logic here
       console.log('Login attempt:', formData);
+      // Simulate successful login
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
     }
   };
 

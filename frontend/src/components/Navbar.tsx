@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 interface NavbarProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
 }
 
-const Navbar = ({ onLoginClick, onRegisterClick }: NavbarProps) => {
+const Navbar = ({ onLoginClick, onRegisterClick, isAuthenticated = false, onLogout }: NavbarProps) => {
   return (
     <motion.nav 
       initial={{ y: -100, opacity: 0 }}
@@ -43,22 +45,44 @@ const Navbar = ({ onLoginClick, onRegisterClick }: NavbarProps) => {
 
           {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onLoginClick}
-              className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
-            >
-              Login
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onRegisterClick}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
-            >
-              Get Started
-            </motion.button>
+            {isAuthenticated ? (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                >
+                  Dashboard
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onLogout}
+                  className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                >
+                  Logout
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onLoginClick}
+                  className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                >
+                  Login
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onRegisterClick}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                >
+                  Get Started
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
       </div>

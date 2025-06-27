@@ -5,9 +5,10 @@ interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin: () => void;
+  onRegisterSuccess?: () => void;
 }
 
-const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) => {
+const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }: RegisterModalProps) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -64,6 +65,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps)
     if (validateForm()) {
       // Handle registration logic here
       console.log('Registration attempt:', formData);
+      // Simulate successful registration
+      if (onRegisterSuccess) {
+        onRegisterSuccess();
+      }
     }
   };
 
