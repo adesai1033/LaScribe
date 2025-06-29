@@ -1,0 +1,261 @@
+% LaTeX output generated from Hw2.pdf
+% Generated on: 2025-06-28 16:14:41
+% Using Anthropic Claude Sonnet 4
+
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\begin{document}
+
+\section*{Homework 2}
+
+\textbf{1)} Given:
+\begin{align}
+P(A) &= 0.3 \\
+P(B) &= 0.4 \\
+P(A \cap B) &= 0.2
+\end{align}
+
+\textbf{a)} 
+\begin{align}
+P(A \cup B) &= P(A) + P(B) - P(A \cap B) \\
+&= 0.3 + 0.4 - 0.2 \\
+&= 0.5
+\end{align}
+
+\textbf{b)} If $A$ and $B$ are independent:
+\begin{align}
+P(A) \cdot P(B) &= P(A \cap B) \\
+0.3 \cdot 0.4 &= 0.12 \neq 0.2
+\end{align}
+Therefore, $A$ and $B$ are not independent.
+
+\textbf{c)} 
+\begin{align}
+P(A^c \cap B) &= P(B) - P(A \cap B) \\
+&= 0.4 - 0.2 \\
+&= 0.2
+\end{align}
+
+\textbf{2)} Given: $f_X(x) = \begin{cases} 2x & 0 \leq x \leq 1 \\ 0 & \text{otherwise} \end{cases}$
+
+\textbf{a)} 
+\begin{align}
+E(X) &= \int_{-\infty}^{\infty} x f(x) dx \\
+&= \int_0^1 x \cdot 2x dx \\
+&= \int_0^1 2x^2 dx \\
+&= \frac{2x^3}{3}\Big|_0^1 \\
+&= \frac{2}{3}
+\end{align}
+
+\begin{align}
+\text{Var}(X) &= E(X^2) - [E(X)]^2 \\
+E(X^2) &= \int_{-\infty}^{\infty} x^2 f(x) dx \\
+&= \int_0^1 x^2 \cdot 2x dx \\
+&= \int_0^1 2x^3 dx \\
+&= \frac{2x^4}{4}\Big|_0^1 \\
+&= \frac{1}{2}
+\end{align}
+
+\begin{align}
+\text{Var}(X) &= \frac{1}{2} - \left(\frac{2}{3}\right)^2 \\
+&= \frac{1}{2} - \frac{4}{9} \\
+&= \frac{9-8}{18} \\
+&= \frac{1}{18}
+\end{align}
+
+\textbf{b)} For Bernoulli distribution: $P(X = x) = p^x(1-p)^{1-x}$
+
+\begin{align}
+P(X = 1) &= p^1(1-p)^0 = p \\
+P(X = 0) &= p^0(1-p)^1 = (1-p)
+\end{align}
+
+\begin{align}
+E(X) &= \sum x P(X = x) \\
+&= 0(1-p) + 1(p) \\
+&= p
+\end{align}
+
+\begin{align}
+E(X^2) &= \sum x^2 P(X = x) \\
+&= 0^2(1-p) + 1^2(p) \\
+&= p
+\end{align}
+
+\begin{align}
+\text{Var}(X) &= E(X^2) - [E(X)]^2 \\
+&= p - p^2 \\
+&= p(1-p)
+\end{align}
+
+\newpage
+
+\textbf{3)} Given: $f_{X,Y}(x,y) = 6xy$ for $0 \leq x \leq 1, 0 \leq y \leq 1$
+
+\textbf{a)} 
+\begin{align}
+f_X(x) &= \int_0^1 6xy dy \\
+&= 6x \left[\frac{y^2}{2}\right]_0^1 \\
+&= 6x \cdot \frac{1}{2} \\
+&= 3x
+\end{align}
+
+Similarly:
+\begin{align}
+f_Y(y) = 3y
+\end{align}
+
+\textbf{b)} 
+\begin{align}
+f_X(x) \cdot f_Y(y) &= 3x \cdot 3y = 9xy \neq 6xy = f_{X,Y}(x,y)
+\end{align}
+Therefore, $X$ and $Y$ are not independent.
+
+\textbf{4)} Event $A$: sum is 5 or 6, so $P(A) = \frac{9}{36} = \frac{1}{4}$
+
+Event $B$: at least one die shows 3, 4, 5, or 6
+\begin{align}
+P(B) &= 1 - P(\text{both dice show 1 or 2}) \\
+&= 1 - \frac{4}{36} \\
+&= \frac{32}{36} = \frac{8}{9}
+\end{align}
+
+\begin{align}
+P(B|A) &= \frac{P(A \cap B)}{P(A)}
+\end{align}
+
+$A \cap B$ includes: $(1,4), (2,3), (2,4), (3,2), (3,3), (4,1), (4,2)$ = 7 outcomes
+
+\begin{align}
+P(B|A) &= \frac{7/36}{9/36} = \frac{7}{9}
+\end{align}
+
+\textbf{5)} Given: $f(x) = 3(1-x)^2$ for $0 \leq x \leq 1$
+
+Let $Y = (1-X)^{1/3}$, so $Y^{1/3} = 1-X$, which gives $X = 1-Y^3$
+
+\begin{align}
+\frac{dx}{dy} &= -3Y^2
+\end{align}
+
+\begin{align}
+f_Y(y) &= f_X(1-y^3) \left|\frac{dx}{dy}\right| \\
+&= 3(1-(1-y^3))^2 \cdot 3y^2 \\
+&= 3(y^3)^2 \cdot 3y^2 \\
+&= 9y^8
+\end{align}
+
+Therefore: $f_Y(y) = 9y^8$ for $0 \leq y \leq 1$, 0 otherwise.
+
+\textbf{6)} Given: $\text{Cov}(\sum_{i=1}^n a_i X_i, \sum_{j=1}^n a_j X_j) = a^T \Sigma a$
+
+Let $Y = \sum_{i=1}^n a_i X_i$ and $Z = \sum_{j=1}^n a_j X_j$
+
+\begin{align}
+E(Y) &= E\left(\sum_{i=1}^n a_i X_i\right) = \sum_{i=1}^n a_i E(X_i) \\
+E(Z) &= \sum_{j=1}^n a_j E(X_j)
+\end{align}
+
+\begin{align}
+E(YZ) &= E\left(\sum_{i=1}^n a_i X_i \sum_{j=1}^n a_j X_j\right) \\
+&= \sum_{i=1}^n \sum_{j=1}^n a_i a_j E(X_i X_j)
+\end{align}
+
+\begin{align}
+\text{Cov}(Y,Z) &= E(YZ) - E(Y)E(Z) \\
+&= \sum_{i=1}^n \sum_{j=1}^n a_i a_j E(X_i X_j) - \sum_{i=1}^n a_i E(X_i) \sum_{j=1}^n a_j E(X_j) \\
+&= \sum_{i=1}^n \sum_{j=1}^n a_i a_j [E(X_i X_j) - E(X_i)E(X_j)] \\
+&= \sum_{i=1}^n \sum_{j=1}^n a_i a_j \text{Cov}(X_i, X_j)
+\end{align}
+
+Since $a^T \Sigma a = \sum_{i=1}^n \sum_{j=1}^n a_i \Sigma_{ij} a_j = \sum_{i=1}^n \sum_{j=1}^n a_i a_j \text{Cov}(X_i, X_j)$
+
+\newpage
+
+\textbf{7)} Given: $f(x) = \log(1 + e^x)$ and $\sigma(x) = \frac{e^x}{1 + e^x}$
+
+\textbf{(1)} 
+\begin{align}
+\frac{d f(x)}{dx} &= \frac{1}{1 + e^x} \cdot \frac{d}{dx}(1 + e^x) \\
+&= \frac{1}{1 + e^x} \cdot e^x \\
+&= \frac{e^x}{1 + e^x} \\
+&= \sigma(x)
+\end{align}
+
+\textbf{(2)} 
+\begin{align}
+\frac{d\sigma(x)}{dx} &= \frac{d}{dx}\left(\frac{e^x}{1 + e^x}\right) \\
+&= \frac{e^x(1 + e^x) - e^x \cdot e^x}{(1 + e^x)^2} \\
+&= \frac{e^x + e^{2x} - e^{2x}}{(1 + e^x)^2} \\
+&= \frac{e^x}{(1 + e^x)^2} \\
+&= \sigma(x) \cdot \frac{1}{1 + e^x} \\
+&= \sigma(x)(1 - \sigma(x))
+\end{align}
+
+\textbf{(3)} 
+\begin{align}
+\log(\sigma(x)) &= \log\left(\frac{e^x}{1 + e^x}\right) \\
+&= \log(e^x) - \log(1 + e^x) \\
+&= x - f(x) \\
+&= -f(-x)
+\end{align}
+
+\textbf{(4)} 
+\begin{align}
+1 - \sigma(x) &= 1 - \frac{e^x}{1 + e^x} \\
+&= \frac{1 + e^x - e^x}{1 + e^x} \\
+&= \frac{1}{1 + e^x} \\
+&= \frac{e^{-x}}{e^{-x}(1 + e^x)} \\
+&= \frac{e^{-x}}{e^{-x} + 1} \\
+&= \sigma(-x)
+\end{align}
+
+\textbf{(5)} 
+\begin{align}
+\sigma^{-1}(x) &= \log\left(\frac{x}{1-x}\right)
+\end{align}
+
+Let $y = \sigma(x) = \frac{e^x}{1 + e^x}$
+
+Then: $y(1 + e^x) = e^x$, so $y + ye^x = e^x$, which gives $y = e^x(1-y)$
+
+Therefore: $e^x = \frac{y}{1-y}$, so $x = \log\left(\frac{y}{1-y}\right)$
+
+\textbf{(6)} For $x > 0$: $f^{-1}(x) = \log(e^x - 1)$
+
+Let $y = \log(1 + e^x)$, then $e^y = 1 + e^x$, so $e^x = e^y - 1$
+
+Therefore: $x = \log(e^y - 1)$
+
+\textbf{(7)} 
+\begin{align}
+f(x) &= \int_{-\infty}^x \sigma(y) dy \\
+&= \int_{-\infty}^x \frac{e^y}{1 + e^y} dy
+\end{align}
+
+Let $u = 1 + e^y$, then $du = e^y dy$
+
+\begin{align}
+\int \frac{e^y}{1 + e^y} dy &= \int \frac{1}{u} du \\
+&= \ln(u) + C \\
+&= \ln(1 + e^y) + C
+\end{align}
+
+\begin{align}
+f(x) &= \ln(1 + e^x) - \lim_{y \to -\infty} \ln(1 + e^y) \\
+&= \ln(1 + e^x) - \ln(1) \\
+&= \ln(1 + e^x)
+\end{align}
+
+\textbf{(8)} 
+\begin{align}
+f(x) - f(-x) &= \log(1 + e^x) - \log(1 + e^{-x}) \\
+&= \log(1 + e^x) - \log\left(\frac{e^x + 1}{e^x}\right) \\
+&= \log(1 + e^x) - [\log(e^x + 1) - x] \\
+&= x
+\end{align}
+
+\end{document}

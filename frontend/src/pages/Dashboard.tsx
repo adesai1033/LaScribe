@@ -13,55 +13,35 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [latexCode, setLatexCode] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
     setUploadedFile(file);
     setIsProcessing(true);
+    setError('');
     
-    // Simulate processing delay
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('http://localhost:5001/api/upload-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setLatexCode(data.latex);
+      } else {
+        setError(data.error || 'Failed to process PDF');
+      }
+    } catch (err) {
+      setError('Network error. Please check if the backend server is running.');
+      console.error('Error uploading file:', err);
+    } finally {
       setIsProcessing(false);
-      // Mock LaTeX output for demonstration
-      setLatexCode(`\\documentclass{article}
-\\usepackage{amsmath}
-
-\\begin{document}
-
-\\section{Introduction}
-
-This document contains mathematical equations and formulas converted from handwritten text.
-
-\\section{Quadratic Formula}
-
-The quadratic formula is given by:
-
-\\[x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\]
-
-\\section{Calculus Examples}
-
-The derivative of a function $f(x)$ is:
-
-\\[f'(x) = \\lim_{h \\to 0} \\frac{f(x + h) - f(x)}{h}\\]
-
-The integral of $f(x)$ is:
-
-\\[\\int f(x) \\, dx = F(x) + C\\]
-
-\\section{Matrix Operations}
-
-A 2x2 matrix example:
-
-\\[A = \\begin{pmatrix}
-a & b \\\\
-c & d
-\\end{pmatrix}\\]
-
-The determinant is:
-
-\\[\\det(A) = ad - bc\\]
-
-\\end{document}`);
-    }, 3000);
+    }
   };
 
   const handleLogout = () => {
@@ -128,8 +108,39 @@ The determinant is:
           </motion.div>
         )}
 
+        {/* Error State */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+          >
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Processing Error
+              </h2>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => {
+                  setUploadedFile(null);
+                  setLatexCode('');
+                  setError('');
+                }}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Split Screen Layout */}
-        {uploadedFile && !isProcessing && (
+        {uploadedFile && !isProcessing && !error && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -154,6 +165,7 @@ The determinant is:
                     onClick={() => {
                       setUploadedFile(null);
                       setLatexCode('');
+                      setError('');
                     }}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
