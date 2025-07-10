@@ -7,6 +7,9 @@ import io
 from werkzeug.utils import secure_filename
 from models.anthropic_latex import generate_latex_from_pdf
 import base64
+import json
+import uuid
+from datetime import datetime
 
 app = Flask(__name__, static_folder='../frontend/dist', static_url_path='')
 CORS(app)
@@ -19,6 +22,22 @@ app.config['OUTPUT_FOLDER'] = 'outputs'
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
+os.makedirs('projects', exist_ok=True)
+
+# Projects storage
+PROJECTS_FILE = 'projects/projects.json'
+
+def load_projects():
+    """Load projects from JSON file"""
+    if os.path.exists(PROJECTS_FILE):
+        with open(PROJECTS_FILE, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_projects(projects):
+    """Save projects to JSON file"""
+    with open(PROJECTS_FILE, 'w') as f:
+        json.dump(projects, f, indent=2)
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
@@ -51,13 +70,30 @@ def upload_pdf():
         print(f"Processing PDF: {filepath}")
         latex_content = generate_latex_from_pdf(filepath)
         
+        # Create project
+        project_id = str(uuid.uuid4())
+        project = {
+            'id': project_id,
+            'name': filename.replace('.pdf', ''),
+            'filename': filename,
+            'latex_code': latex_content,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        # Save project
+        projects = load_projects()
+        projects.append(project)
+        save_projects(projects)
+        
         # Clean up the uploaded file
         os.remove(filepath)
         
         return jsonify({
             'success': True,
             'latex': latex_content,
-            'filename': filename
+            'filename': filename,
+            'project_id': project_id
         })
         
     except Exception as e:
@@ -130,6 +166,84 @@ def compile_latex():
     except Exception as e:
         print(f"Error compiling LaTeX: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/api/projects', methods=['GET'])
+def get_projects():
+    """Get all projects"""
+    try:
+        projects = load_projects()
+        return jsonify({
+            'success': True,
+            'projects': projects
+        })
+    except Exception as e:
+        print(f"Error loading projects: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/projects/<project_id>', methods=['GET'])
+def get_project(project_id):
+    """Get a specific project"""
+    try:
+        projects = load_projects()
+        project = next((p for p in projects if p['id'] == project_id), None)
+        
+        if project:
+            return jsonify({
+                'success': True,
+                'project': project
+            })
+        else:
+            return jsonify({'error': 'Project not found'}), 404
+    except Exception as e:
+        print(f"Error loading project: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/projects/<project_id>', methods=['PUT'])
+def update_project(project_id):
+    """Update a project's LaTeX code"""
+    try:
+        data = request.get_json()
+        if not data or 'latex_code' not in data:
+            return jsonify({'error': 'No LaTeX code provided'}), 400
+        
+        projects = load_projects()
+        project = next((p for p in projects if p['id'] == project_id), None)
+        
+        if project:
+            project['latex_code'] = data['latex_code']
+            project['updated_at'] = datetime.now().isoformat()
+            save_projects(projects)
+            
+            return jsonify({
+                'success': True,
+                'project': project
+            })
+        else:
+            return jsonify({'error': 'Project not found'}), 404
+    except Exception as e:
+        print(f"Error updating project: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/projects/<project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    """Delete a project"""
+    try:
+        projects = load_projects()
+        project = next((p for p in projects if p['id'] == project_id), None)
+        
+        if project:
+            projects = [p for p in projects if p['id'] != project_id]
+            save_projects(projects)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Project deleted successfully'
+            })
+        else:
+            return jsonify({'error': 'Project not found'}), 404
+    except Exception as e:
+        print(f"Error deleting project: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

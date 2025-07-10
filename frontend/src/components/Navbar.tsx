@@ -5,9 +5,10 @@ interface NavbarProps {
   onRegisterClick: () => void;
   isAuthenticated?: boolean;
   onLogout?: () => void;
+  onViewProjects?: () => void;
 }
 
-const Navbar = ({ onLoginClick, onRegisterClick, isAuthenticated = false, onLogout }: NavbarProps) => {
+const Navbar = ({ onLoginClick, onRegisterClick, isAuthenticated = false, onLogout, onViewProjects }: NavbarProps) => {
   return (
     <motion.nav 
       initial={{ y: -100, opacity: 0 }}
@@ -53,6 +54,14 @@ const Navbar = ({ onLoginClick, onRegisterClick, isAuthenticated = false, onLogo
                   className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
                 >
                   Dashboard
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onViewProjects}
+                  className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                >
+                  Projects
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}

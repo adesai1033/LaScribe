@@ -1,19 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import PDFUpload from '../components/PDFUpload';
 import PDFViewer from '../components/PDFViewer';
 import LaTeXViewer from '../components/LaTeXViewer';
 
-interface DashboardProps {
-  onLogout?: () => void;
+interface Project {
+  id: string;
+  name: string;
+  filename: string;
+  latex_code: string;
+  created_at: string;
+  updated_at: string;
 }
 
-const Dashboard = ({ onLogout }: DashboardProps) => {
+interface DashboardProps {
+  onLogout?: () => void;
+  selectedProject?: Project | null;
+  onProjectSelect?: (project: Project) => void;
+  onViewProjects?: () => void;
+}
+
+const Dashboard = ({ onLogout, selectedProject, onProjectSelect, onViewProjects }: DashboardProps) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [latexCode, setLatexCode] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [currentProject, setCurrentProject] = useState<Project | null>(selectedProject || null);
+
+  // Handle project selection
+  useEffect(() => {
+    if (selectedProject) {
+      setCurrentProject(selectedProject);
+      setLatexCode(selectedProject.latex_code);
+      // Create a mock file for the PDF viewer
+      const mockFile = new File([], selectedProject.filename, { type: 'application/pdf' });
+      setUploadedFile(mockFile);
+    }
+  }, [selectedProject]);
 
   const handleFileUpload = async (file: File) => {
     setUploadedFile(file);
@@ -33,6 +57,16 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       
       if (response.ok && data.success) {
         setLatexCode(data.latex);
+        // Create a new project
+        const newProject: Project = {
+          id: data.project_id,
+          name: data.filename.replace('.pdf', ''),
+          filename: data.filename,
+          latex_code: data.latex,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        setCurrentProject(newProject);
       } else {
         setError(data.error || 'Failed to process PDF');
       }
@@ -50,6 +84,30 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     }
   };
 
+  const handleLatexChange = async (newCode: string) => {
+    setLatexCode(newCode);
+    
+    // Update project if it exists
+    if (currentProject) {
+      try {
+        const response = await fetch(`http://localhost:5001/api/projects/${currentProject.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ latex_code: newCode }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentProject(data.project);
+        }
+      } catch (err) {
+        console.error('Error updating project:', err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -58,6 +116,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
         onRegisterClick={() => {}}
         isAuthenticated={true}
         onLogout={handleLogout}
+        onViewProjects={onViewProjects}
       />
       
       {/* Main Content */}
@@ -187,10 +246,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               <div className="h-full flex flex-col">
                 {/* LaTeX Content */}
                 <div className="flex-1 p-4 overflow-auto">
-                  <LaTeXViewer 
-                    code={latexCode} 
-                    onCodeChange={(newCode: string) => setLatexCode(newCode)}
-                  />
+                                  <LaTeXViewer 
+                  code={latexCode} 
+                  onCodeChange={handleLatexChange}
+                />
                 </div>
               </div>
             </div>
