@@ -176,7 +176,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 </div>
                 
                 {/* PDF Content */}
-                <div className="flex-1 p-4 overflow-auto">
+                <div className="flex-1 overflow-hidden">
                   <PDFViewer file={uploadedFile} />
                 </div>
               </div>

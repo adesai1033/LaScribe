@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface LaTeXViewerProps {
@@ -10,11 +10,23 @@ const LaTeXViewer = ({ code, onCodeChange }: LaTeXViewerProps) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   const [editableCode, setEditableCode] = useState(code);
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compilationError, setCompilationError] = useState<string>('');
+  const [compiledPdfUrl, setCompiledPdfUrl] = useState<string>('');
 
   // Update editable code when prop changes
-  useState(() => {
+  useEffect(() => {
     setEditableCode(code);
-  });
+  }, [code]);
+
+  // Clean up PDF URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (compiledPdfUrl) {
+        URL.revokeObjectURL(compiledPdfUrl);
+      }
+    };
+  }, [compiledPdfUrl]);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newCode = e.target.value;
@@ -44,6 +56,56 @@ const LaTeXViewer = ({ code, onCodeChange }: LaTeXViewerProps) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleCompilePDF = async () => {
+    if (!editableCode.trim()) {
+      setCompilationError('No LaTeX code to compile');
+      return;
+    }
+
+    setIsCompiling(true);
+    setCompilationError('');
+
+    try {
+      console.log('Compiling LaTeX code...');
+      const response = await fetch('http://localhost:5001/api/compile-latex', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ latex: editableCode }),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (response.ok) {
+        // Store the PDF for preview
+        const blob = await response.blob();
+        console.log('PDF blob size:', blob.size);
+        const url = URL.createObjectURL(blob);
+        
+        // Clean up previous PDF URL if it exists
+        if (compiledPdfUrl) {
+          URL.revokeObjectURL(compiledPdfUrl);
+        }
+        
+        setCompiledPdfUrl(url);
+        setCompilationError('');
+        
+        // Switch to preview tab to show the PDF
+        setActiveTab('preview');
+      } else {
+        const errorData = await response.json();
+        console.error('Compilation error:', errorData);
+        setCompilationError(errorData.error || 'Compilation failed');
+      }
+    } catch (error) {
+      console.error('Compilation error:', error);
+      setCompilationError('Network error. Please check if the backend server is running.');
+    } finally {
+      setIsCompiling(false);
+    }
   };
 
   // Simple LaTeX syntax highlighting
@@ -105,10 +167,35 @@ const LaTeXViewer = ({ code, onCodeChange }: LaTeXViewerProps) => {
             onClick={handleDownload}
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-500 transition-colors"
           >
-            Download
+            Download .tex
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCompilePDF}
+            disabled={isCompiling || !editableCode.trim()}
+            className={`px-3 py-1 rounded text-sm font-medium transition-all duration-200 ${
+              isCompiling || !editableCode.trim()
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-500'
+            }`}
+          >
+            {isCompiling ? 'Compiling...' : 'Compile PDF'}
           </motion.button>
         </div>
       </div>
+
+      {/* Error Display */}
+      {compilationError && (
+        <div className="p-3 bg-red-900 border-b border-red-700">
+          <div className="flex items-center space-x-2 text-red-300">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm">{compilationError}</span>
+          </div>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="flex-1 overflow-auto">
@@ -160,66 +247,98 @@ const LaTeXViewer = ({ code, onCodeChange }: LaTeXViewerProps) => {
         ) : (
           // Preview Tab
           editableCode ? (
-            <div className="p-4 bg-white">
-              <div className="max-w-2xl mx-auto">
-                <div className="space-y-6">
-                  {/* Mock compiled PDF preview */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Mathematical Analysis</h1>
+            <div className="h-full bg-white">
+              {isCompiling ? (
+                // Compiling state
+                <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-50 to-blue-50">
+                  <div className="text-center">
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-6">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-10 h-10 border-3 border-blue-200 border-t-blue-600 rounded-full"
+                        />
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Compiling PDF</h3>
+                    <p className="text-gray-600 mb-4">Converting your LaTeX code to PDF...</p>
+                    <div className="flex items-center justify-center space-x-1">
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="w-2 h-2 bg-blue-500 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+                        className="w-2 h-2 bg-blue-500 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+                        className="w-2 h-2 bg-blue-500 rounded-full"
+                      />
+                    </div>
                   </div>
-                  
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Introduction</h2>
-                    <p className="text-gray-700 leading-relaxed">
-                      This document contains mathematical equations and formulas converted from handwritten text.
+                </div>
+              ) : compiledPdfUrl ? (
+                // PDF Preview
+                <div className="h-full w-full">
+                  <iframe
+                    src={compiledPdfUrl}
+                    className="w-full h-full border-0"
+                    title="PDF Preview"
+                  />
+                </div>
+              ) : (
+                // Compile prompt
+                <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-50 to-blue-50">
+                  <div className="max-w-md mx-auto text-center">
+                    <div className="w-24 h-24 bg-white rounded-3xl shadow-lg flex items-center justify-center mx-auto mb-6">
+                      <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Compile</h3>
+                    <p className="text-gray-600 mb-8 text-lg">
+                      Generate a professional PDF from your LaTeX code
                     </p>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Quadratic Formula</h2>
-                    <p className="text-gray-700 mb-2">The quadratic formula is given by:</p>
-                    <div className="text-center text-lg font-mono text-gray-800 bg-gray-50 p-4 rounded-lg border">
-                      x = (-b ± √(b² - 4ac)) / 2a
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Calculus Examples</h2>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-gray-700 mb-1">The derivative of a function f(x) is:</p>
-                        <div className="text-center font-mono text-gray-800 bg-gray-50 p-3 rounded border">
-                          f'(x) = lim(h→0) [f(x+h) - f(x)] / h
+                    
+                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        What you'll get
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                          Professional PDF
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-700 mb-1">The integral of f(x) is:</p>
-                        <div className="text-center font-mono text-gray-800 bg-gray-50 p-3 rounded border">
-                          ∫ f(x) dx = F(x) + C
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                          Math formatting
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-3">Matrix Operations</h2>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-gray-700 mb-1">A 2x2 matrix example:</p>
-                        <div className="text-center font-mono text-gray-800 bg-gray-50 p-3 rounded border">
-                          A = [a b; c d]
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                          Publication quality
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-700 mb-1">The determinant is:</p>
-                        <div className="text-center font-mono text-gray-800 bg-gray-50 p-3 rounded border">
-                          det(A) = ad - bc
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                          LaTeX IDE quality
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
