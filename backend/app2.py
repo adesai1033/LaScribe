@@ -11,7 +11,7 @@ import json
 import uuid
 from datetime import datetime
 
-app = Flask(__name__, static_folder='../frontend/dist', static_url_path='')
+app = Flask(__name__, static_folder='../frontend_2/dist', static_url_path='')
 CORS(app, origins=['http://localhost:8080', 'http://127.0.0.1:8080'])
 
 # Configuration
@@ -76,6 +76,7 @@ def upload_pdf():
             'id': project_id,
             'name': filename.replace('.pdf', ''),
             'filename': filename,
+            'original_pdf_path': filepath,  # Store the path to original PDF
             'latex_code': latex_content,
             'created_at': datetime.now().isoformat(),
             'updated_at': datetime.now().isoformat()
@@ -86,8 +87,8 @@ def upload_pdf():
         projects.append(project)
         save_projects(projects)
         
-        # Clean up the uploaded file
-        os.remove(filepath)
+        # Don't remove the uploaded file - keep it for the original PDF tab
+        # os.remove(filepath)
         
         return jsonify({
             'success': True,
@@ -200,26 +201,30 @@ def get_project(project_id):
 
 @app.route('/api/projects/<project_id>', methods=['PUT'])
 def update_project(project_id):
-    """Update a project's LaTeX code"""
+    """Update a project"""
     try:
         data = request.get_json()
-        if not data or 'latex_code' not in data:
-            return jsonify({'error': 'No LaTeX code provided'}), 400
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
         
         projects = load_projects()
-        project = next((p for p in projects if p['id'] == project_id), None)
+        project_index = next((i for i, p in enumerate(projects) if p['id'] == project_id), None)
         
-        if project:
-            project['latex_code'] = data['latex_code']
-            project['updated_at'] = datetime.now().isoformat()
-            save_projects(projects)
-            
-            return jsonify({
-                'success': True,
-                'project': project
-            })
-        else:
+        if project_index is None:
             return jsonify({'error': 'Project not found'}), 404
+        
+        # Update project
+        projects[project_index].update({
+            'latex_code': data.get('latex_code', projects[project_index]['latex_code']),
+            'updated_at': datetime.now().isoformat()
+        })
+        
+        save_projects(projects)
+        
+        return jsonify({
+            'success': True,
+            'project': projects[project_index]
+        })
     except Exception as e:
         print(f"Error updating project: {e}")
         return jsonify({'error': str(e)}), 500
@@ -231,32 +236,57 @@ def delete_project(project_id):
         projects = load_projects()
         project = next((p for p in projects if p['id'] == project_id), None)
         
-        if project:
-            projects = [p for p in projects if p['id'] != project_id]
-            save_projects(projects)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Project deleted successfully'
-            })
-        else:
+        if not project:
             return jsonify({'error': 'Project not found'}), 404
+        
+        # Remove project
+        projects = [p for p in projects if p['id'] != project_id]
+        save_projects(projects)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Project deleted successfully'
+        })
     except Exception as e:
         print(f"Error deleting project: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/projects/<project_id>/original-pdf', methods=['GET'])
+def get_original_pdf(project_id):
+    """Get the original PDF file for a project"""
+    try:
+        projects = load_projects()
+        project = next((p for p in projects if p['id'] == project_id), None)
+        
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+        
+        # Check if original PDF path exists
+        if 'original_pdf_path' not in project or not os.path.exists(project['original_pdf_path']):
+            return jsonify({'error': 'Original PDF not found'}), 404
+        
+        # Serve the PDF file
+        return send_file(
+            project['original_pdf_path'],
+            mimetype='application/pdf',
+            as_attachment=False
+        )
+    except Exception as e:
+        print(f"Error serving original PDF: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy', 'message': 'LaScribe API is running'})
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'message': 'Backend is running'})
 
-# Serve frontend routes
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
+    """Serve the frontend application"""
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='localhost', port=5001) 
+    app.run(debug=True, host='0.0.0.0', port=5001)
